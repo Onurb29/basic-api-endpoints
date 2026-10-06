@@ -38,4 +38,10 @@ public class BlogService
         _blogs.Add(newBlog);
         return newBlog;
     }
+
+  public bool DeleteBlog(int id)
+{
+    var blog = GetBlog(id);
+    return blog is not null && _blogs.Remove(blog);
+}
 }

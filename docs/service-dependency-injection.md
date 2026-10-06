@@ -91,6 +91,39 @@ app.MapPost("/blogs", (CreateBlogRequest request, BlogService blogService) =>
 
 Keep `AddBlog` in `BlogService.cs`, not `Program.cs`, because `_blogs` is private to the service. The request body contains `title` and `content`; the server supplies the ID.
 
+## Delete a blog
+
+Keep the collection operation in `BlogService`. `DeleteBlog` looks up the blog by ID, removes it when found, and returns `true` only when an item was removed:
+
+```csharp
+public bool DeleteBlog(int id)
+{
+    var blog = GetBlog(id);
+    return blog is not null && _blogs.Remove(blog);
+}
+```
+
+The endpoint calls the service and translates that boolean into an HTTP response:
+
+```csharp
+app.MapDelete("/blogs/{id:int}", (int id, BlogService blogService) =>
+{
+    IResult result = blogService.DeleteBlog(id)
+        ? Results.NoContent()
+        : Results.NotFound($"Blog with ID {id} not found.");
+
+    return result;
+});
+```
+
+Send a DELETE request from `requests.http` to test it:
+
+```http
+DELETE http://localhost:5144/blogs/2
+```
+
+Deleting an existing blog returns `204 No Content`, which intentionally has no response body. Deleting an ID that is not present returns `404 Not Found`. A subsequent `GET /blogs/2` can confirm that the item was removed.
+
 ## Service lifetime in this example
 
 `AddSingleton<BlogService>()` creates one service instance for the lifetime of the application. All requests handled by that running process share the same in-memory list, so a blog added by POST is available to later GET requests. This is not durable storage: stopping or restarting the application recreates the seeded list and loses blogs added at runtime. Persisting data across restarts requires storage such as a database. A database-backed service commonly uses a scoped lifetime so its instance is shared within a request.

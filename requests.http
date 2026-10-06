@@ -61,3 +61,8 @@ Content-Type: application/json
     "title": "following Blog Post",
     "content": "This is the content of the new blog post."
 }   
+
+###
+
+# DELETE http://localhost:5144/blogs/{id}
+DELETE http://localhost:5144/blogs/2

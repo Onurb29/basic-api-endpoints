@@ -33,6 +33,15 @@ app.MapPost("/blogs", (CreateBlogRequest request, BlogService blogService) =>
     return Results.Created($"/blogs/{blog.Id}", blog);
 });
 
+app.MapDelete("/blogs/{id:int}", (int id, BlogService blogService) =>
+{
+    IResult result = blogService.DeleteBlog(id)
+        ? Results.NoContent()
+        : Results.NotFound($"Blog with ID {id} not found.");
+
+    return result;
+});
+
 app.MapGet("/users/{userID}/posts/{slug}", (int userID, string slug) => {
     return $"User ID: {userID}, Post ID: {slug}";
 });
