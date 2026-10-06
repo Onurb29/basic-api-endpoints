@@ -15,3 +15,31 @@ DELETE http://localhost:5144/
 ###
 
 POST http://localhost:5144/
+
+###
+# GET http://localhost:5144/users/{userID}/posts/{slug}
+GET http://localhost:5144/users/123/posts/some-text
+
+###
+# GET http://localhost:5144/products/{id:int:min(0)}
+GET http://localhost:5144/products/5    
+
+###
+# GET http://localhost:5144/report/{year?}
+GET http://localhost:5144/report/2023
+
+###
+# GET http://localhost:5144/search
+GET http://localhost:5144/search?q=sample&page=1
+
+###
+# GET http://localhost:5144/files/{fileName:alpha}
+GET http://localhost:5144/files/samplefile
+
+###
+# GET http://localhost:5144/store/{category}/{productID:int?}/{*extraPath}
+GET http://localhost:5144/store/electronics/123/some/extra/path
+
+###
+# GET http://localhost:5144/store/{category}/{productID:int?}/{*extraPath}/
+GET http://localhost:5144/store/electronics/sale/1234/
