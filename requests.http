@@ -42,4 +42,9 @@ GET http://localhost:5144/store/electronics/123/some/extra/path
 
 ###
 # GET http://localhost:5144/store/{category}/{productID:int?}/{*extraPath}/
-GET http://localhost:5144/store/electronics/sale/1234/
+GET http://localhost:5144/store/electronics/1234/
+
+###
+
+# GET http://localhost:5144/blogs/{id}
+GET http://localhost:5144/blogs/1
