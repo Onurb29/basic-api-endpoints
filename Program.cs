@@ -1,20 +1,36 @@
 using BasicApiEndpoints.Models;
+using BasicApiEndpoints.Service;
+
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<BlogService>();
+
 var app = builder.Build();
 
-var blogs = new List<Blog>
-{
-    new Blog { Id = 1, Title = "First Blog", Content = "This is the first blog post." },
-    new Blog { Id = 2, Title = "Second Blog", Content = "This is the second blog post." },
-    new Blog { Id = 3, Title = "Third Blog", Content = "This is the third blog post." }
-};  
 
 app.MapGet("/", () => "Root Path");
 app.MapGet("/downloads", () => "Downloads");
 
-app.MapGet("/blogs/{id}", (int id) => {
-    return blogs[id - 1]; // Adjusting for 0-based indexing     
+app.MapGet("/blogs", (BlogService blogService) =>
+    Results.Ok(blogService.GetAllBlogs()));
+
+app.MapGet("/blogs/{id:int}", (int id, BlogService blogService) =>
+{
+    var blog = blogService.GetBlog(id);
+
+    IResult result = blog is null
+        ? Results.NotFound($"Blog with ID {id} not found.")
+        : Results.Ok(blog);
+
+    return result;
+});
+
+app.MapPost("/blogs", (CreateBlogRequest request, BlogService blogService) =>
+{
+    var blog = blogService.AddBlog(request.Title, request.Content);
+    // In a real application, you would save the blog to a database or perform other actions.
+    // For this example, we'll just return the created blog with a 201 Created status.
+    return Results.Created($"/blogs/{blog.Id}", blog);
 });
 
 app.MapGet("/users/{userID}/posts/{slug}", (int userID, string slug) => {

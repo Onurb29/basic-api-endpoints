@@ -5,3 +5,9 @@ public class Blog
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
 }
+
+public class CreateBlogRequest
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+}

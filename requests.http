@@ -45,6 +45,19 @@ GET http://localhost:5144/store/electronics/123/some/extra/path
 GET http://localhost:5144/store/electronics/1234/
 
 ###
+GET http://localhost:5144/blogs
 
+###
 # GET http://localhost:5144/blogs/{id}
 GET http://localhost:5144/blogs/1
+
+###
+
+# POST http://localhost:5144/blogs
+POST http://localhost:5144/blogs
+Content-Type: application/json
+
+{
+    "title": "following Blog Post",
+    "content": "This is the content of the new blog post."
+}   
