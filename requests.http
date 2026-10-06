@@ -66,3 +66,14 @@ Content-Type: application/json
 
 # DELETE http://localhost:5144/blogs/{id}
 DELETE http://localhost:5144/blogs/2
+
+###
+
+# PUT http://localhost:5144/blogs/{id}
+PUT http://localhost:5144/blogs/1
+Content-Type: application/json  
+
+{
+    "title": "Updated Blog Post",
+    "content": "This is the updated content of the blog post."
+}   

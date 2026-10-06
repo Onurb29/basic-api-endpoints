@@ -124,6 +124,54 @@ DELETE http://localhost:5144/blogs/2
 
 Deleting an existing blog returns `204 No Content`, which intentionally has no response body. Deleting an ID that is not present returns `404 Not Found`. A subsequent `GET /blogs/2` can confirm that the item was removed.
 
+## Update a blog
+
+Put the update operation in `BlogService`, where blog data is managed. This method finds the blog by ID, updates its editable fields, and returns the updated blog. It returns `null` if no blog has that ID:
+
+```csharp
+public Blog? UpdateBlog(int id, string title, string content)
+{
+    var blog = GetBlog(id);
+    if (blog is null)
+    {
+        return null;
+    }
+
+    blog.Title = title;
+    blog.Content = content;
+    return blog;
+}
+```
+
+The `PUT /blogs/{id:int}` endpoint passes the route ID and request fields to the service, then maps the result to an HTTP response:
+
+```csharp
+app.MapPut("/blogs/{id:int}", (int id, CreateBlogRequest request, BlogService blogService) =>
+{
+    var updatedBlog = blogService.UpdateBlog(id, request.Title, request.Content);
+
+    IResult result = updatedBlog is null
+        ? Results.NotFound($"Blog with ID {id} not found.")
+        : Results.Ok(updatedBlog);
+
+    return result;
+});
+```
+
+Send a PUT request from `requests.http` with the fields to update:
+
+```http
+PUT http://localhost:5144/blogs/1
+Content-Type: application/json
+
+{
+    "title": "Updated Blog Post",
+    "content": "This is the updated content of the blog post."
+}
+```
+
+This endpoint returns `200 OK` with the updated blog, or `404 Not Found` when the ID does not exist. The request body supplies `title` and `content`; the ID comes from the route. Since this is `PUT`, both editable fields should be provided.
+
 ## Service lifetime in this example
 
 `AddSingleton<BlogService>()` creates one service instance for the lifetime of the application. All requests handled by that running process share the same in-memory list, so a blog added by POST is available to later GET requests. This is not durable storage: stopping or restarting the application recreates the seeded list and loses blogs added at runtime. Persisting data across restarts requires storage such as a database. A database-backed service commonly uses a scoped lifetime so its instance is shared within a request.

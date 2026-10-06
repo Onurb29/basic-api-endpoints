@@ -39,9 +39,22 @@ public class BlogService
         return newBlog;
     }
 
-  public bool DeleteBlog(int id)
-{
-    var blog = GetBlog(id);
-    return blog is not null && _blogs.Remove(blog);
-}
+    public bool DeleteBlog(int id)
+        {
+            var blog = GetBlog(id);
+            return blog is not null && _blogs.Remove(blog);
+        }
+
+    public Blog? UpdateBlog(int id, string title, string content)
+        {
+            var blog = GetBlog(id);
+            if (blog is null)
+            {
+                return null;
+            }
+
+            blog.Title = title;
+            blog.Content = content;
+            return blog;
+        }
 }

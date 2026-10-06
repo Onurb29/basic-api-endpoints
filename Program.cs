@@ -42,6 +42,17 @@ app.MapDelete("/blogs/{id:int}", (int id, BlogService blogService) =>
     return result;
 });
 
+app.MapPut("/blogs/{id:int}", (int id, CreateBlogRequest request, BlogService blogService) =>
+{
+    var updatedBlog = blogService.UpdateBlog(id, request.Title, request.Content);
+
+    IResult result = updatedBlog is null
+        ? Results.NotFound($"Blog with ID {id} not found.")
+        : Results.Ok(updatedBlog);
+
+    return result;
+});
+
 app.MapGet("/users/{userID}/posts/{slug}", (int userID, string slug) => {
     return $"User ID: {userID}, Post ID: {slug}";
 });
