@@ -1,57 +1,16 @@
-using BasicApiEndpoints.Models;
 using BasicApiEndpoints.Service;
 
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<BlogService>();
+builder.Services.AddSingleton<ProductService>();
+builder.Services.AddControllers();
 
 var app = builder.Build();
-
+app.MapControllers();
 
 app.MapGet("/", () => "Root Path");
 app.MapGet("/downloads", () => "Downloads");
-
-app.MapGet("/blogs", (BlogService blogService) =>
-    Results.Ok(blogService.GetAllBlogs()));
-
-app.MapGet("/blogs/{id:int}", (int id, BlogService blogService) =>
-{
-    var blog = blogService.GetBlog(id);
-
-    IResult result = blog is null
-        ? Results.NotFound($"Blog with ID {id} not found.")
-        : Results.Ok(blog);
-
-    return result;
-});
-
-app.MapPost("/blogs", (CreateBlogRequest request, BlogService blogService) =>
-{
-    var blog = blogService.AddBlog(request.Title, request.Content);
-    // In a real application, you would save the blog to a database or perform other actions.
-    // For this example, we'll just return the created blog with a 201 Created status.
-    return Results.Created($"/blogs/{blog.Id}", blog);
-});
-
-app.MapDelete("/blogs/{id:int}", (int id, BlogService blogService) =>
-{
-    IResult result = blogService.DeleteBlog(id)
-        ? Results.NoContent()
-        : Results.NotFound($"Blog with ID {id} not found.");
-
-    return result;
-});
-
-app.MapPut("/blogs/{id:int}", (int id, CreateBlogRequest request, BlogService blogService) =>
-{
-    var updatedBlog = blogService.UpdateBlog(id, request.Title, request.Content);
-
-    IResult result = updatedBlog is null
-        ? Results.NotFound($"Blog with ID {id} not found.")
-        : Results.Ok(updatedBlog);
-
-    return result;
-});
 
 app.MapGet("/users/{userID}/posts/{slug}", (int userID, string slug) => {
     return $"User ID: {userID}, Post ID: {slug}";
