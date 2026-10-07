@@ -2,7 +2,7 @@ using BasicApiEndpoints.Service;
 
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<BlogService>();
+builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
 

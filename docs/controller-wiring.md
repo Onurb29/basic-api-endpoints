@@ -1,14 +1,14 @@
-# Controller Wiring
+# Controller Wiring and Service Abstraction
 
-This project uses MVC controllers for its blog and product resource endpoints. The controller actions delegate data operations to services, while `Program.cs` configures dependency injection and maps the controllers.
+This project uses MVC controllers for its blog and product resource APIs. Controllers handle HTTP concerns, services perform application operations, and models represent data and request contracts.
 
-## Register services and controllers
+## Register Services and Controllers
 
-Register the services and MVC controller support before building the app, then map attribute-routed controllers after `Build()`:
+Register services and controller support before building the application. Map controller routes after `Build()`:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<BlogService>();
+builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
 
@@ -16,20 +16,37 @@ var app = builder.Build();
 app.MapControllers();
 ```
 
-`AddControllers()` registers the MVC services. `MapControllers()` makes the controller actions available as HTTP endpoints. `BlogService` and `ProductService` are registered so ASP.NET Core can provide them to controllers through dependency injection.
+`AddControllers()` registers MVC support. `MapControllers()` exposes attribute-routed actions. The `IBlogService` registration tells dependency injection to provide `BlogService` whenever a consumer requests `IBlogService`.
 
-## Controller routing and injection
+## The Service Interface
 
-`BlogsController` inherits from `ControllerBase`. Its route and HTTP method attributes define its URLs, and its constructor receives `BlogService` from dependency injection:
+`IBlogService` defines which blog operations are available without specifying how they are implemented:
+
+```csharp
+public interface IBlogService
+{
+    IReadOnlyList<Blog> GetAllBlogs();
+    Blog? GetBlog(int id);
+    Blog AddBlog(string title, string content);
+    bool DeleteBlog(int id);
+    Blog? UpdateBlog(int id, string title, string content);
+}
+```
+
+`BlogService` implements this contract using the current in-memory list. A future implementation could use a database or remote API while preserving the same operations.
+
+## Controller Dependency Injection
+
+`BlogsController` depends on `IBlogService`, not on the concrete `BlogService` class:
 
 ```csharp
 [ApiController]
 [Route("api/blogs")]
 public class BlogsController : ControllerBase
 {
-    private readonly BlogService _blogService;
+    private readonly IBlogService _blogService;
 
-    public BlogsController(BlogService blogService)
+    public BlogsController(IBlogService blogService)
     {
         _blogService = blogService;
     }
@@ -45,9 +62,83 @@ public class BlogsController : ControllerBase
 }
 ```
 
-`[Route("api/blogs")]` provides the controller's route prefix. `[HttpGet("{id}")]` adds the ID segment, producing `GET /api/blogs/{id}`. The `ProductController` follows the same pattern with the prefix `/api/products`.
+When ASP.NET Core creates `BlogsController`, it sees the `IBlogService` constructor parameter and asks the dependency injection container for it. The container uses the registration in `Program.cs` and supplies a `BlogService` instance.
 
-## Blog routes
+`[Route("api/blogs")]` sets the controller's route prefix. `[HttpGet("{id}")]` adds an ID segment, so that action responds to `GET /api/blogs/{id}`. `ProductController` uses the `/api/products` prefix.
+
+## Request and Startup Flow
+
+Application startup follows this order:
+
+```text
+CreateBuilder
+      |
+Register services
+      |
+Build application
+      |
+Map controllers and endpoints
+      |
+Run
+```
+
+A blog request flows through these layers:
+
+```text
+HTTP request
+     |
+     v
+BlogsController (HTTP input and response)
+     |
+     v
+IBlogService (stable application contract)
+     |
+     v
+BlogService (application logic)
+     |
+     v
+In-memory list (current data source)
+```
+
+The controller understands HTTP. The service understands the application's operations. The model represents the data. The interface lets the controller depend on the operations it needs rather than the class that performs them.
+
+In this project, `Controllers/` contains the structured REST APIs, `Services/` contains application logic and service contracts, `Models/` contains data and request contracts, and the remaining Minimal API mappings in `Program.cs` are routing demonstrations.
+
+## PI AF and OT Analogy
+
+The architectural idea has a useful, though not exact, parallel in PI and OT systems:
+
+```text
+Application consumer
+       |
+       v
+IBlogService (stable software contract)
+       |
+       v
+BlogService (selected implementation)
+       |
+       v
+In-memory list, database, or remote API
+```
+
+Conceptually, this resembles a consumer reading through an AF Attribute and its data reference or calculation to a PI Point or another data source:
+
+```text
+Consumer
+   |
+   v
+AF Attribute
+   |
+   v
+Data reference or calculation
+   |
+   v
+PI Point or another data source
+```
+
+This is an analogy about decoupling consumers from data sources, not a one-to-one equivalence between AF objects and C# interfaces. `IBlogService` gives the controller a stable contract, and dependency injection selects the implementation. If a new service implements the same interface, the controller can keep working while the registration changes.
+
+## Blog Routes
 
 | Method | Route | Result |
 | --- | --- | --- |
@@ -57,10 +148,10 @@ public class BlogsController : ControllerBase
 | `PUT` | `/api/blogs/{id}` | Updates a blog and returns `200 OK`, or `404 Not Found`. |
 | `DELETE` | `/api/blogs/{id}` | Deletes a blog and returns `204 No Content`, or `404 Not Found`. |
 
-The corresponding requests are in `requests.http`. For example:
+The corresponding sample requests are in `requests.http`, for example:
 
 ```http
 GET http://localhost:5144/api/blogs
 ```
 
-Keep the HTTP responsibility in the controller: it reads route/body inputs and chooses status codes. Keep list lookup and mutation in the service. The services currently use in-memory lists, so data created at runtime is lost when the app restarts.
+The services currently use in-memory lists. Data created at runtime is available while the application is running but is lost when it restarts.

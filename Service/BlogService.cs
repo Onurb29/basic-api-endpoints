@@ -1,7 +1,7 @@
 using BasicApiEndpoints.Models;
 namespace BasicApiEndpoints.Service;
 
-public class BlogService
+public class BlogService : IBlogService
 {
     private readonly List<Blog> _blogs;
     private int _nextId;

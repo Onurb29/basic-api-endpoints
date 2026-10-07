@@ -8,9 +8,9 @@ using System.Linq;
 [ApiController]
 public class BlogsController : ControllerBase
 {
-    private readonly BlogService _blogService;
+    private readonly IBlogService _blogService;
 
-    public BlogsController(BlogService blogService)
+    public BlogsController(IBlogService blogService)
     {
         _blogService = blogService;
     }
