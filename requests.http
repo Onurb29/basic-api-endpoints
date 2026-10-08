@@ -89,3 +89,6 @@ DELETE http://localhost:5144/api/products/1
 
 ### Product controller: verify the product was deleted
 GET http://localhost:5144/api/products/1
+
+#### Error handling controller: test global exception handling
+GET http://localhost:5144/api/ErrorHandling/global-test

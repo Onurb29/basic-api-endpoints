@@ -1,12 +1,49 @@
 using BasicApiEndpoints.Service;
+using Serilog;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/myapp-.txt",
+        rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
 builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Global exception handling middleware
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(
+            ex,
+            "Unhandled exception occurred while processing {Method} {Path}",
+            context.Request.Method,
+            context.Request.Path);
+
+        context.Response.StatusCode =
+            StatusCodes.Status500InternalServerError;
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "Something went wrong."
+        });
+    }
+});
+
 app.MapControllers();
 
 app.MapGet("/", () => "Root Path");
