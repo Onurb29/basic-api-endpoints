@@ -24,11 +24,4 @@ public class ErrorHandlingController : ControllerBase
 
         return Ok(new { result = numerator / denominator });
     }
-
-    [HttpGet("global-test")]
-    public IActionResult GlobalErrorTest()
-    {
-        throw new InvalidOperationException(
-            "Testing global exception handling.");
-    }
 }
