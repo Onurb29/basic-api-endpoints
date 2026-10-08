@@ -1,6 +1,6 @@
 using BasicApiEndpoints.Service;
+using BasicApiEndpoints.Endpoints;
 using Serilog;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +15,9 @@ builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.MapControllers();
+app.MapSerializationEndpoints();
 
 // Global exception handling middleware
 app.Use(async (context, next) =>
@@ -40,8 +43,6 @@ app.Use(async (context, next) =>
         });
     }
 });
-
-app.MapControllers();
 
 app.MapGet("/", () => "Root Path");
 app.MapGet("/downloads", () => "Downloads");

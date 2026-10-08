@@ -91,4 +91,27 @@ DELETE http://localhost:5144/api/products/1
 GET http://localhost:5144/api/products/1
 
 #### Error handling controller: test global exception handling
-GET http://localhost:5144/api/ErrorHandling/global-test
+// GET http://localhost:5144/api/ErrorHandling/global-test
+
+### Serialization: manual JSON
+GET http://localhost:5144/serialization/manual-json
+
+###
+
+### Serialization: custom JSON with snake_case
+GET http://localhost:5144/serialization/custom-json
+
+###
+
+### Serialization: built-in TypedResults.Json
+GET http://localhost:5144/serialization/json
+
+###
+
+### Serialization: automatic JSON
+GET http://localhost:5144/serialization/auto
+
+###
+
+### Serialization: XML
+GET http://localhost:5144/serialization/xml
