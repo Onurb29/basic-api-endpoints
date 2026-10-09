@@ -115,3 +115,6 @@ GET http://localhost:5144/serialization/auto
 
 ### Serialization: XML
 GET http://localhost:5144/serialization/xml
+
+### Serialization: binary
+POST http://localhost:5144/serialization/binary

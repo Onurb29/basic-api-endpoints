@@ -4,22 +4,26 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Serilog as the application's logging provider.
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
+// Register application services and MVC controller support.
 builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
+// Map attribute-routed controllers and serialization endpoints.
 app.MapControllers();
 app.MapSerializationEndpoints();
 
 // Global exception handling middleware
+// Catch unhandled exceptions from requests and return a generic 500 response.
 app.Use(async (context, next) =>
 {
     try
@@ -44,6 +48,7 @@ app.Use(async (context, next) =>
     }
 });
 
+// Minimal API route examples.
 app.MapGet("/", () => "Root Path");
 app.MapGet("/downloads", () => "Downloads");
 

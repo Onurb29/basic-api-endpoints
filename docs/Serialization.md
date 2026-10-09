@@ -468,6 +468,300 @@ Content-Type: application/xml
 ```
 
 ---
+# 6. Binary Serialization with `BinaryWriter`
+
+The binary example writes selected values from the `SerializationSample` object into a binary `.dat` file.
+
+Unlike JSON or XML, the output is not intended to be human-readable.
+
+```csharp
+app.MapPost("/serialization/binary", () =>
+{
+    var samplePerson = CreateSamplePerson();
+
+    var filePath = "person.dat";
+
+    using var stream = new FileStream(
+        filePath,
+        FileMode.Create);
+
+    using var writer = new BinaryWriter(stream);
+
+    writer.Write(samplePerson.UserName);
+    writer.Write(samplePerson.UserAge);
+
+    return Results.Ok(new
+    {
+        message = "Binary serialization complete.",
+        file = filePath
+    });
+});
+```
+
+The flow is:
+
+```text
+SerializationSample
+        ↓
+Read individual properties
+        ↓
+BinaryWriter
+        ↓
+FileStream
+        ↓
+person.dat
+```
+
+The endpoint returns:
+
+```json
+{
+  "message": "Binary serialization complete.",
+  "file": "person.dat"
+}
+```
+
+The JSON response is only confirming that the binary file was created.
+
+The actual serialized data is stored in:
+
+```text
+person.dat
+```
+
+---
+
+## Why Use `POST` Instead of `GET`?
+
+The binary endpoint creates or overwrites a file.
+
+Because the operation changes something on the server, `POST` is more appropriate than `GET`.
+
+```text
+GET
+→ retrieve data
+
+POST
+→ create or perform an operation with side effects
+```
+
+Therefore:
+
+```http
+POST http://localhost:5144/serialization/binary
+```
+
+is a better API design than:
+
+```http
+GET http://localhost:5144/serialization/binary
+```
+
+---
+
+## Binary Data Has an Expected Order
+
+The values are written in this order:
+
+```csharp
+writer.Write(samplePerson.UserName);
+writer.Write(samplePerson.UserAge);
+```
+
+Conceptually:
+
+```text
+person.dat
+
+┌─────────────────┬─────────────┐
+│ String: "Alice" │ Int32: 30   │
+└─────────────────┴─────────────┘
+```
+
+When reading the file later, the values must be read back using the same types and in the same order.
+
+For example:
+
+```csharp
+using var stream = new FileStream(
+    "person.dat",
+    FileMode.Open);
+
+using var reader = new BinaryReader(stream);
+
+var userName = reader.ReadString();
+var userAge = reader.ReadInt32();
+```
+
+The reader must understand the binary layout:
+
+```text
+WriteString
+    ↓
+ReadString
+
+WriteInt32
+    ↓
+ReadInt32
+```
+
+Unlike JSON or XML, binary data does not contain readable property names such as:
+
+```text
+UserName
+UserAge
+```
+
+Both the writer and reader therefore need to agree on the data structure.
+
+---
+
+## Binary vs JSON vs XML
+
+```text
+JSON
+    ↓
+Human-readable
+Common for APIs
+Easy to debug
+Good interoperability
+
+XML
+    ↓
+Human-readable
+More verbose
+Common in legacy and enterprise integrations
+
+Binary
+    ↓
+Not human-readable
+Compact representation
+Useful for files, protocols, and low-level communication
+Requires both sides to understand the data layout
+```
+
+An industrial example could look like:
+
+```text
+Device / PLC
+    ↓
+Binary protocol
+    ↓
+.NET application
+    ↓
+C# object
+    ↓
+JSON
+    ↓
+Web API / UI
+```
+
+The internal application can convert between different representations depending on what each external system expects.
+
+---
+
+## `BinaryWriter` Is Not `BinaryFormatter`
+
+This exercise uses:
+
+```csharp
+BinaryWriter
+```
+
+which explicitly writes individual values.
+
+For example:
+
+```csharp
+writer.Write(samplePerson.UserName);
+writer.Write(samplePerson.UserAge);
+```
+
+This is different from the old `BinaryFormatter`, which attempted to automatically serialize entire .NET object graphs.
+
+The important mental model is:
+
+```text
+BinaryWriter
+    ↓
+Developer explicitly controls
+what values are written
+and in what order
+```
+
+---
+
+## Add to `requests.http`
+
+```http
+### Serialization: binary
+
+POST http://localhost:5144/serialization/binary
+```
+
+The current serialization tests are now:
+
+```http
+### Serialization: manual JSON
+
+GET http://localhost:5144/serialization/manual-json
+
+###
+
+### Serialization: custom JSON with snake_case
+
+GET http://localhost:5144/serialization/custom-json
+
+###
+
+### Serialization: built-in TypedResults.Json
+
+GET http://localhost:5144/serialization/json
+
+###
+
+### Serialization: automatic JSON
+
+GET http://localhost:5144/serialization/auto
+
+###
+
+### Serialization: XML
+
+GET http://localhost:5144/serialization/xml
+
+###
+
+### Serialization: binary
+
+POST http://localhost:5144/serialization/binary
+```
+
+---
+
+## Updated Serialization Overview
+
+```text
+C# Object
+    │
+    ├── Automatic JSON
+    │      ↓
+    │   HTTP API
+    │
+    ├── Manual / Custom JSON
+    │      ↓
+    │   Controlled JSON representation
+    │
+    ├── XML
+    │      ↓
+    │   Legacy / alternate text representation
+    │
+    └── BinaryWriter
+           ↓
+        Binary file / protocol representation
+```
+
+---
 
 # JSON vs XML
 
@@ -781,6 +1075,8 @@ JSON Response
 - Course demonstration endpoints can be separated from `Program.cs` using extension methods.
 - Endpoint groups must only be registered once.
 - Existing controller responses were already using automatic serialization behind the scenes.
+- `BinaryWriter` can write values into a compact binary representation.
+- Binary readers and writers must agree on the type and order of the stored values.
 
 ---
 

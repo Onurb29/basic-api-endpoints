@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using BasicApiEndpoints.Models;
 using BasicApiEndpoints.Service;
-using System.Collections.Generic;
-using System.Linq;
 
 [Route("api/blogs")]
 [ApiController]
 public class BlogsController : ControllerBase
 {
+    // Keep HTTP handling here; the service performs the blog operations.
     private readonly IBlogService _blogService;
 
     public BlogsController(IBlogService blogService)
@@ -30,6 +29,7 @@ public class BlogsController : ControllerBase
         {
             return NotFound($"Blog with ID {id} not found.");
         }
+
         return Ok(blog);
     }
 
@@ -37,7 +37,12 @@ public class BlogsController : ControllerBase
     public IActionResult CreateBlog([FromBody] CreateBlogRequest request)
     {
         var createdBlog = _blogService.AddBlog(request.Title, request.Content);
-        return CreatedAtAction(nameof(GetBlogById), new { id = createdBlog.Id }, createdBlog);
+
+        // Return 201 Created with a Location pointing to the new blog.
+        return CreatedAtAction(
+            nameof(GetBlogById),
+            new { id = createdBlog.Id },
+            createdBlog);
     }
 
     [HttpPut("{id}")]
@@ -48,6 +53,7 @@ public class BlogsController : ControllerBase
         {
             return NotFound($"Blog with ID {id} not found.");
         }
+
         return Ok(updatedBlog);
     }
 
@@ -59,6 +65,8 @@ public class BlogsController : ControllerBase
         {
             return NotFound($"Blog with ID {id} not found.");
         }
+
+        // 204 indicates the deletion succeeded and there is no response body.
         return NoContent();
     }
 }
