@@ -118,3 +118,108 @@ GET http://localhost:5144/serialization/xml
 
 ### Serialization: binary
 POST http://localhost:5144/serialization/binary
+
+### Deserialization: automatic JSON
+
+POST http://localhost:5144/deserialization/auto
+Content-Type: application/json
+
+{
+  "userName": "Alice",
+  "userAge": 30
+}
+
+###
+
+### Deserialization: JSON without optional age
+
+POST http://localhost:5144/deserialization/auto
+Content-Type: application/json
+
+{
+  "userName": "Alice"
+}
+
+###
+
+### Deserialization: JSON missing required username
+
+POST http://localhost:5144/deserialization/auto
+Content-Type: application/json
+
+{
+  "userAge": 30
+}
+
+###
+
+### Deserialization: explicit JSON
+
+POST http://localhost:5144/deserialization/json
+Content-Type: application/json
+
+{
+  "userName": "Alice",
+  "userAge": 30
+}
+
+###
+
+### Deserialization: JSON with extra field
+
+POST http://localhost:5144/deserialization/json
+Content-Type: application/json
+
+{
+  "userName": "Alice",
+  "userAge": 30,
+  "favoriteFurnace": 64
+}
+
+###
+
+### Deserialization: custom options rejects extra fields
+
+POST http://localhost:5144/deserialization/custom-options
+Content-Type: application/json
+
+{
+  "userName": "Alice",
+  "userAge": 30,
+  "favoriteFurnace": 64
+}
+
+###
+
+### Deserialization: wrong data type
+
+POST http://localhost:5144/deserialization/json
+Content-Type: application/json
+
+{
+  "userName": "Alice",
+  "userAge": "buffalo"
+}
+
+###
+
+### Deserialization: XML
+
+POST http://localhost:5144/deserialization/xml
+Content-Type: application/xml
+
+<DeserializationSample>
+  <UserName>Alice</UserName>
+  <UserAge>30</UserAge>
+</DeserializationSample>
+
+###
+
+### Serialization: binary
+
+POST http://localhost:5144/serialization/binary
+
+### Deserialization: binary
+
+GET http://localhost:5144/deserialization/binary
+
