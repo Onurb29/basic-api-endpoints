@@ -223,3 +223,21 @@ POST http://localhost:5144/serialization/binary
 
 GET http://localhost:5144/deserialization/binary
 
+### Deserialization: validated data
+
+POST http://localhost:5144/deserialization/validated
+Content-Type: application/json
+
+{
+  "userName": "Dana",
+  "userAge": 30
+}
+
+### Deserialization: validated data with errors
+POST http://localhost:5144/deserialization/validated
+Content-Type: application/json
+
+{
+  "userName": "",
+  "userAge": -10
+}

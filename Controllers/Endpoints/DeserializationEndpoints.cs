@@ -101,5 +101,20 @@ public static class DeserializationEndpoints
             return Results.Ok(person);
 });
 
-    }   
-}
+app.MapPost("/deserialization/validated", (DeserializationSample person) =>
+{
+    if (string.IsNullOrWhiteSpace(person.UserName))
+    {
+        return Results.BadRequest(new { message = "UserName is required." });
+    }
+
+    if (person.UserAge is <= 0 or > 120)
+    {
+        return Results.BadRequest(new { message = "UserAge must be a positive integer between 1 and 120." });
+    }
+
+    return Results.Ok(person);
+});
+
+    }
+}   
