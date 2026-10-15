@@ -22,6 +22,7 @@ var app = builder.Build();
 app.MapControllers();
 app.MapSerializationEndpoints();
 app.MapDeserializationEndpoints();
+app.MapSerializationSecurityEndpoints();
 
 // Global exception handling middleware
 // Catch unhandled exceptions from requests and return a generic 500 response.
