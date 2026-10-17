@@ -19,6 +19,8 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+app.UseMiddleware<RequestTimingMiddleware>();
+
 // Global exception handling middleware
 // Catch unhandled exceptions from requests and return a generic 500 response.
 app.Use(async (context, next) =>
