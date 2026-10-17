@@ -262,3 +262,6 @@ GET http://localhost:5144/middleware/pass
 
 ### Middleware: stop before reaching the endpoint
 GET http://localhost:5144/middleware/blocked
+
+### HTTP logging: unknown endpoint
+GET http://localhost:5144/this-route-does-not-exist

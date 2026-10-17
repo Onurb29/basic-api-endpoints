@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpLogging;
 using BasicApiEndpoints.Service;
 using BasicApiEndpoints.Endpoints;
 using BasicApiEndpoints.Middleware;
@@ -12,6 +13,16 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields =
+        HttpLoggingFields.RequestMethod |
+        HttpLoggingFields.RequestPath |
+        HttpLoggingFields.ResponseStatusCode;
+
+    logging.CombineLogs = true;
+});
+
 // Register application services and MVC controller support.
 builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
@@ -20,6 +31,7 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 app.UseMiddleware<RequestTimingMiddleware>();
+app.UseHttpLogging();
 
 // Global exception handling middleware
 // Catch unhandled exceptions from requests and return a generic 500 response.
