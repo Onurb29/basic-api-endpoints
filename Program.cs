@@ -1,5 +1,9 @@
+using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 using BasicApiEndpoints.Service;
 using BasicApiEndpoints.Endpoints;
+using BasicApiEndpoints.Middleware;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,18 +15,38 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields =
+        HttpLoggingFields.RequestMethod |
+        HttpLoggingFields.RequestPath |
+        HttpLoggingFields.ResponseStatusCode;
+
+    logging.CombineLogs = true;
+});
+
 // Register application services and MVC controller support.
 builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
 
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole("Administrator");
+    });
+});
+
 var app = builder.Build();
 
-// Map attribute-routed controllers and serialization endpoints.
-app.MapControllers();
-app.MapSerializationEndpoints();
-app.MapDeserializationEndpoints();
-app.MapSerializationSecurityEndpoints();
+app.UseMiddleware<RequestTimingMiddleware>();
+app.UseHttpLogging();
 
 // Global exception handling middleware
 // Catch unhandled exceptions from requests and return a generic 500 response.
@@ -40,8 +64,13 @@ app.Use(async (context, next) =>
             context.Request.Method,
             context.Request.Path);
 
-        context.Response.StatusCode =
-            StatusCodes.Status500InternalServerError;
+        if (context.Response.HasStarted)
+        {
+            throw;
+        }
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
         await context.Response.WriteAsJsonAsync(new
         {
@@ -49,6 +78,17 @@ app.Use(async (context, next) =>
         });
     }
 });
+
+app.UseMiddleware<PipelineDemoMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map attribute-routed controllers and serialization endpoints.
+app.MapControllers();
+app.MapSerializationEndpoints();
+app.MapDeserializationEndpoints();
+app.MapSerializationSecurityEndpoints();
 
 // Minimal API route examples.
 app.MapGet("/", () => "Root Path");
@@ -85,6 +125,40 @@ app.MapGet("/store/{category}/{productID:int?}/{*extraPath}", (string category, 
 app.MapPut("/" , () => "This is a PUT request to the root path");
 app.MapDelete("/", () => "Delete request to the root path");
 app.MapPost("/", () => "POST request to the root path");
+
+
+app.MapGet("/middleware/pass", (ILogger<Program> logger) =>
+{
+    logger.LogInformation("Endpoint: handling the request");
+
+    return Results.Ok(new
+    {
+        message = "Request reached the endpoint."
+    });
+});
+
+app.MapGet("/middleware/blocked", (ILogger<Program> logger) =>
+{
+    logger.LogInformation(
+        "Endpoint: this should never run");
+
+    return Results.Ok(new
+    {
+        message = "You should never receive this response."
+    });
+});
+
+// Add the protection policy to the /security/admin endpoint, requiring the user to be authenticated and have the "Administrator" role.
+app.MapGet("/security/admin", (ClaimsPrincipal user) =>
+{
+    return Results.Ok(new
+    {
+        message = "Administrator access granted.",
+        name = user.Identity?.Name
+    });
+})
+.RequireAuthorization("AdminOnly");
+
 app.Run();
 
 
