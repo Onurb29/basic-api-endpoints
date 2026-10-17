@@ -242,6 +242,8 @@ Content-Type: application/json
   "userAge": -10
 }
 
+###
+
 ### Serialization security: validated user
 
 POST http://localhost:5144/security/serialize-user
@@ -252,3 +254,11 @@ Content-Type: application/json
   "email": "alice@example.com",
   "password": "SecureP@ss123"
 }
+
+###
+
+### Middleware: allow the request through
+GET http://localhost:5144/middleware/pass
+
+### Middleware: stop before reaching the endpoint
+GET http://localhost:5144/middleware/blocked
