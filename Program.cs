@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 using BasicApiEndpoints.Service;
 using BasicApiEndpoints.Endpoints;
 using BasicApiEndpoints.Middleware;
@@ -27,6 +29,19 @@ builder.Services.AddHttpLogging(logging =>
 builder.Services.AddSingleton<IBlogService, BlogService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddControllers();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole("Administrator");
+    });
+});
 
 var app = builder.Build();
 
@@ -65,6 +80,9 @@ app.Use(async (context, next) =>
 });
 
 app.UseMiddleware<PipelineDemoMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Map attribute-routed controllers and serialization endpoints.
 app.MapControllers();
@@ -129,6 +147,17 @@ app.MapGet("/middleware/blocked", (ILogger<Program> logger) =>
         message = "You should never receive this response."
     });
 });
+
+// Add the protection policy to the /security/admin endpoint, requiring the user to be authenticated and have the "Administrator" role.
+app.MapGet("/security/admin", (ClaimsPrincipal user) =>
+{
+    return Results.Ok(new
+    {
+        message = "Administrator access granted.",
+        name = user.Identity?.Name
+    });
+})
+.RequireAuthorization("AdminOnly");
 
 app.Run();
 
